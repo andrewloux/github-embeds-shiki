@@ -1,64 +1,64 @@
-# Obsidian GitHub Embeds
+# GitHub Embeds (Shiki)
 
-*Embed GitHub issues, PRs, and code snippets directly in Obsidian.*
+Paste a GitHub permalink into an Obsidian note. Reading view shows the linked lines as a code card. The card's line numbers match the file.
 
-![Demo GIF](./screenshots/github-embeds-demo.gif)
+This plugin is a fork of [GitHub Embeds](https://github.com/MrGVSV/obsidian-github-embeds) 1.0.7 by Gino Valente. [Shiki Highlighter](https://github.com/mProjectsCode/obsidian-shiki-plugin) renders each card.
 
-## Details
+## Why a fork
 
-When in **reader mode**, the Github Embeds plugin will find all GitHub links and attempt to embed a preview below it.
+With upstream GitHub Embeds, a link to `#L1086-L1139` shows coloured code without line numbers. Three steps lead there:
 
-#### Issues and PRs
+1. Upstream wraps the snippet in a code fence. It renders the fence with `MarkdownRenderer.render`.
+2. Shiki Highlighter calls `getSectionInfo` to read the fence's line in the note. That line holds options such as `showLineNumbers`.
+3. The fence came from GitHub, so the note has no fence line. Shiki colours the code with its default options, which show no line numbers.
 
-Issues and pull requests will be displayed for any link matching one of the following:
+This fork calls Shiki's renderer directly and passes the options itself.
 
-- `https://github.com/<OWNER>/<REPO>/issues/<ISSUE NUMBER>`
-- `https://github.com/<OWNER>/<REPO>/pull/<PR NUMBER>`
+## How a card renders
 
-#### File Snippets
+1. `getShikiHighlighter` looks up the Shiki Highlighter plugin. If that plugin is off or loading, the card renders the upstream way.
+2. `shikiLanguageFor` picks a language from Shiki's own list, `obsidianSafeLanguageNames`. It tries the file extension first, such as `tf` or `yml`. Next it tries upstream's PrismJS name, such as `c` for a `.h` file. Shiki has no grammar for some files, such as `.fga`. Those render as `plaintext`.
+3. `renderWithEc` draws the code with `showLineNumbers startLineNumber=<first line> wrap`. A link to `#L172-L183` shows lines 172 to 183. Long lines wrap inside the code column.
+4. If `renderWithEc` fails, the card renders the upstream way.
 
-File snippets will be displayed when the link matches a URL like:
+Obsidian finds plugin updates by looking up each plugin's ID in the community store. This plugin's ID is `github-embeds-shiki`, and the store lists no plugin under that ID. So Obsidian never offers upstream as an update to this fork.
 
-- `https://github.com/<OWNER>/<REPO>/blob/<REF>/<PATH TO FILE>`
+## Install
 
-Snippets can also be limited to one or more lines. If we wanted a file to only show line 12, we could append our URL with `#L12`. To show multiple lines, like 12 through 19, we could change this to read `#L12-L19`.
+1. Install and enable **Shiki Highlighter** from Obsidian's community plugins.
+2. Build this plugin:
 
-> **Note**
-> While we can scope our files to a particular set of lines, the entire file will still need to be requested. This may result in poor performance for really large files.
+   ```sh
+   git clone https://github.com/andrewloux/github-embeds-shiki.git
+   cd github-embeds-shiki
+   npm ci
+   npm run build
+   ```
 
-#### Authentication
+3. Copy `main.js`, `manifest.json` and `styles.css` into `<vault>/.obsidian/plugins/github-embeds-shiki/`.
+4. Reload Obsidian. Open Settings → Community plugins and enable **GitHub Embeds (Shiki)**.
+5. Paste a GitHub token into the plugin's settings. Every GitHub API call needs one. For private repositories, use a [fine-grained token](https://github.com/settings/personal-access-tokens/new). Give it read-only **Contents**, **Issues** and **Pull requests** permissions.
 
-In order to make use of GitHub's API, calls need to be authenticated. Because of that, this plugin requires you to [create a personal access token](https://github.com/settings/tokens?type=beta).
+The plugin saves the token as plain text in `<vault>/.obsidian/plugins/github-embeds-shiki/data.json`. Obsidian Sync and git copy that file with the rest of the vault.
 
-By default, the token will be generated with the **Repository access** set to **Public repositories (read-only)**. To allow this plugin to also work with private repositories, change the access to **All repositories** and give it at minimum the following repository permissions:
+## Usage
 
-- **Contents** (*Read-only*)
-- **Issues** (*Read-only*)
-- **Pull requests** (*Read-only*)
+Paste a permalink into a note. Then switch to Reading view:
 
-With the token created, navigate to this plugin's settings and paste it into the token text field.
+```
+https://github.com/<owner>/<repo>/blob/<sha>/<path>#L12-L19
+```
 
-### Screenshots
+- `#L12` shows one line. `#L12-L19` shows lines 12 to 19. A link without `#L` shows the whole file.
+- Long snippets start collapsed. The **Snippet preview threshold** setting sets the limit, `10` lines by default. Click a snippet's file path to open it.
+- Issue and pull request links get cards too, as in upstream. Turn them off under **Issues → Enable**.
 
-<img alt="Screenshot of pull request embed" src="./screenshots/pr-screenshot.png" width="50%" /><img alt="Screenshot of file embed" src="./screenshots/file-screenshot.png" width="50%" />
+## Limits from upstream
 
-## Todo
+- Cards render in Reading view only. Live Preview shows the plain link.
+- Every GitHub `blob`, `issues` and `pull` link in a note gets a card. Upstream has no way to skip one link.
+- Each card downloads the whole file. Then it cuts out the line range.
 
-There are some remaining features I'd like to add:
+## License
 
-- [ ] Display embeds in editor mode
-- [ ] Opt-in/opt-out specific links
-- [ ] Better configuration of issue/PR info placement
-- [ ] More PR metadata (additions/deletions, check status, etc.)
-
-The following are things that would be great but are likely out-of-scope for this project:
-
-- Allowing issue/PR to be editable
-
-## Support
-
-This plugin is totally free to use! I have a lot of fun making stuff like this, so I never expect any type of financial compensation. But if you enjoy the plugin and are feeling generous, I certainly won't say no to a cup of coffee!
-
-<a href="https://www.buymeacoffee.com/ginov">
-   <img alt="" src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=ginov&button_colour=FF5F5F&font_colour=ffffff&font_family=Cookie&outline_colour=000000&coffee_colour=FFDD00" />
-</a>
+MIT. Copyright (c) 2023 Gino Valente. This fork's changes use the same license.

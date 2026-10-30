@@ -1,10 +1,10 @@
 {
-	"id": "github-embeds",
-	"name": "GitHub Embeds",
-	"version": "1.0.7",
+	"id": "github-embeds-shiki",
+	"name": "GitHub Embeds (Shiki)",
+	"version": "1.1.0",
 	"minAppVersion": "0.15.0",
-	"description": "Embed GitHub issues, PRs, and code snippets directly in Obsidian.",
-	"author": "Gino Valente",
+	"description": "Embed GitHub issues, PRs, and code snippets directly in Obsidian. Renders file snippets through Shiki Highlighter with the file's line numbers.",
+	"author": "Gino Valente, Andrew Louis",
 	"authorUrl": "https://github.com/MrGVSV",
 	"fundingUrl": {
 		"Buy Me a Coffee": "https://www.buymeacoffee.com/ginov",

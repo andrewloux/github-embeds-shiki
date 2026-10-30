@@ -1,7 +1,7 @@
 {
-	"name": "github-embeds",
-	"version": "1.0.7",
-	"description": "Embed GitHub issues, PRs, and code snippets directly in Obsidian.",
+	"name": "github-embeds-shiki",
+	"version": "1.1.0",
+	"description": "Embed GitHub issues, PRs, and code snippets directly in Obsidian. Renders file snippets through Shiki Highlighter with the file's line numbers.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node -r dotenv/config esbuild.config.mjs",
@@ -13,11 +13,11 @@
 		"lint": "eslint src",
 		"tsc": "tsc -noEmit -skipLibCheck"
 	},
-	"author": "Gino Valente",
+	"author": "Gino Valente, Andrew Louis",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/MrGVSV/obsidian-github-embeds.git"
+		"url": "https://github.com/andrewloux/github-embeds-shiki.git"
 	},
 	"devDependencies": {
 		"@graphql-codegen/cli": "5.0.0",

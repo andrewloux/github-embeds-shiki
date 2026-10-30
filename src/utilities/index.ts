@@ -3,4 +3,5 @@ export * from './dom';
 export * from './general';
 export * from './graphql';
 export * from './languages';
+export * from './shiki';
 export * from './strings';
