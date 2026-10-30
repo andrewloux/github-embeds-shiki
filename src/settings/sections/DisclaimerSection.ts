@@ -27,6 +27,6 @@ export class DisclaimerSection extends BaseSection {
 	}
 
 	private get disclaimerText(): string {
-		return 'Please note that this plugin currently only renders embeds while in **Reading** view.';
+		return 'This plugin renders embeds in **Reading** view and **Live Preview**. Source mode shows the plain link.';
 	}
 }

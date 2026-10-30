@@ -21,6 +21,8 @@ const fileRegex = /^https:\/\/github\.com\/([\w-]+)\/([\w.-]+)\/blob\/([^/]+)\/(
 export class Client {
 	private readonly apolloClient: ApolloClient<object>;
 	private readonly headers: Headers;
+	/** Snippets of commit permalinks, whose content can never change. */
+	private readonly commitFiles = new Map<FileUrl, FileSnippet>();
 
 	constructor(token: string) {
 		const headers: HeadersInit = {
@@ -106,6 +108,20 @@ export class Client {
 	 * @see {@link Client.isFileUrl} to check if a URL is valid.
 	 */
 	public async fetchFile(fileUrl: FileUrl): Promise<FileSnippet> {
+		const cached = this.commitFiles.get(fileUrl);
+		if (cached) {
+			return cached;
+		}
+
+		const file = await this.fetchFileFromApi(fileUrl);
+		if (file.ref.kind === 'commit') {
+			this.commitFiles.set(fileUrl, file);
+		}
+
+		return file;
+	}
+
+	private async fetchFileFromApi(fileUrl: FileUrl): Promise<FileSnippet> {
 		const matches = fileRegex.exec(fileUrl);
 		if (!matches) {
 			throw new Error(`Invalid file URL: ${fileUrl}`);

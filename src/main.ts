@@ -10,12 +10,16 @@ import { LoadingEmbed } from './postprocessing/LoadingEmbed';
 import styles from './styles.scss';
 import { EmbedContainer } from './postprocessing/EmbedContainer';
 import { Langs } from './utilities';
+import { Extension } from '@codemirror/state';
+import { livePreviewEmbeds } from './editor/livePreviewEmbeds';
 
 // Initialize Apollo Client __DEV__ variable
 window.__DEV__ = process.env.NODE_ENV === 'development';
 
 export default class GithubEmbedsPlugin extends SettingsProvider {
 	private client: Client | null = null;
+	/** Holds the Live Preview extension; rebuilt on settings changes, per `registerEditorExtension`. */
+	private readonly editorExtension: Extension[] = [];
 
 	async onload() {
 		await Langs.initialize(this.app, this);
@@ -34,6 +38,25 @@ export default class GithubEmbedsPlugin extends SettingsProvider {
 			const links = Array.from(el.querySelectorAll('a'));
 			await Promise.all(links.map((link) => this.processLink(link, ctx)));
 		});
+
+		this.registerEditorExtension(this.editorExtension);
+		this.onSettingsChanged(
+			(_, settings) => {
+				this.editorExtension.length = 0;
+				this.editorExtension.push(
+					livePreviewEmbeds(settings, (url, el, parent) => {
+						const container = new EmbedContainer(el, parent);
+						if (Client.isIssueUrl(url)) {
+							void this.createIssueEmbed(url, container);
+						} else if (Client.isFileUrl(url)) {
+							void this.createFileEmbed(url, container);
+						}
+					}),
+				);
+				this.app.workspace.updateOptions();
+			},
+			{ immediate: true },
+		);
 	}
 
 	private async processLink(link: HTMLAnchorElement, ctx: MarkdownPostProcessorContext) {
@@ -73,17 +96,19 @@ export default class GithubEmbedsPlugin extends SettingsProvider {
 			}
 		};
 
-		this.onSettingsChanged(
-			(prev, curr) => {
-				if (!curr.embedFiles) {
-					// Remove embeds
-					container.empty();
-				} else if (!prev?.embedFiles || prev?.githubToken !== curr.githubToken) {
-					// Add embeds
-					return tryLoad();
-				}
-			},
-			{ immediate: true },
+		container.register(
+			this.onSettingsChanged(
+				(prev, curr) => {
+					if (!curr.embedFiles) {
+						// Remove embeds
+						container.empty();
+					} else if (!prev?.embedFiles || prev?.githubToken !== curr.githubToken) {
+						// Add embeds
+						return tryLoad();
+					}
+				},
+				{ immediate: true },
+			),
 		);
 	}
 
@@ -122,17 +147,19 @@ export default class GithubEmbedsPlugin extends SettingsProvider {
 			}
 		};
 
-		this.onSettingsChanged(
-			(prev, curr) => {
-				if (!curr.embedIssues) {
-					// Remove embeds
-					container.empty();
-				} else if (!prev?.embedIssues || prev?.githubToken !== curr.githubToken) {
-					// Add embeds
-					return tryLoad();
-				}
-			},
-			{ immediate: true },
+		container.register(
+			this.onSettingsChanged(
+				(prev, curr) => {
+					if (!curr.embedIssues) {
+						// Remove embeds
+						container.empty();
+					} else if (!prev?.embedIssues || prev?.githubToken !== curr.githubToken) {
+						// Add embeds
+						return tryLoad();
+					}
+				},
+				{ immediate: true },
+			),
 		);
 	}
 }

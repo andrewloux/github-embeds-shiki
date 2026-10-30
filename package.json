@@ -20,6 +20,7 @@
 		"url": "https://github.com/andrewloux/github-embeds-shiki.git"
 	},
 	"devDependencies": {
+		"@codemirror/language": "6.9.0",
 		"@graphql-codegen/cli": "5.0.0",
 		"@graphql-codegen/introspection": "4.0.0",
 		"@graphql-codegen/near-operation-file-preset": "^2.5.0",

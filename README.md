@@ -1,6 +1,6 @@
 # GitHub Embeds (Shiki)
 
-Paste a GitHub permalink into an Obsidian note. Reading view shows the linked lines as a code card. The card's line numbers match the file.
+Paste a GitHub permalink into an Obsidian note. Live Preview and Reading view show the linked lines as a code card. The card's line numbers match the file.
 
 This plugin is a fork of [GitHub Embeds](https://github.com/MrGVSV/obsidian-github-embeds) 1.0.7 by Gino Valente. [Shiki Highlighter](https://github.com/mProjectsCode/obsidian-shiki-plugin) renders each card.
 
@@ -14,12 +14,25 @@ With upstream GitHub Embeds, a link to `#L1086-L1139` shows coloured code withou
 
 This fork calls Shiki's renderer directly and passes the options itself.
 
+Upstream also draws cards in Reading view only. It hooks `registerMarkdownPostProcessor`, which runs on Reading view output. Live Preview is a CodeMirror editor, where post-processors never run. So Live Preview shows the plain link.
+
 ## How a card renders
 
 1. `getShikiHighlighter` looks up the Shiki Highlighter plugin. If that plugin is off or loading, the card renders the upstream way.
 2. `shikiLanguageFor` picks a language from Shiki's own list, `obsidianSafeLanguageNames`. It tries the file extension first, such as `tf` or `yml`. Next it tries upstream's PrismJS name, such as `c` for a `.h` file. Shiki has no grammar for some files, such as `.fga`. Those render as `plaintext`.
 3. `renderWithEc` draws the code with `showLineNumbers startLineNumber=<first line> wrap`. A link to `#L172-L183` shows lines 172 to 183. Long lines wrap inside the code column.
 4. If `renderWithEc` fails, the card renders the upstream way.
+
+## How Live Preview finds links
+
+1. `livePreviewEmbeds` is a CodeMirror `StateField`. It rescans the note after each edit. It also rescans when the parser reaches more of a long note.
+2. For each `https://github.com/` match, it calls `syntaxTree(state).resolveInner`. It keeps a match only if the token name contains `url`. Code spans and code blocks use other token names, so URLs inside them stay plain text.
+3. `Client.isFileUrl` and `Client.isIssueUrl` decide whether the URL gets a card. The **Files → Enable** and **Issues → Enable** settings can turn each kind off.
+4. An `EmbedWidget` block widget sits below the URL's line. It calls `createFileEmbed` or `createIssueEmbed`, the same methods Reading view calls.
+5. When a card scrolls out of view, CodeMirror destroys its widget. The widget's `Component` unloads and removes the card's settings listener.
+6. `Client.fetchFile` keeps commit permalinks in memory. A card that scrolls back into view renders without a second download.
+
+## Updates
 
 Obsidian finds plugin updates by looking up each plugin's ID in the community store. This plugin's ID is `github-embeds-shiki`, and the store lists no plugin under that ID. So Obsidian never offers upstream as an update to this fork.
 
@@ -53,9 +66,10 @@ https://github.com/<owner>/<repo>/blob/<sha>/<path>#L12-L19
 - Long snippets start collapsed. The **Snippet preview threshold** setting sets the limit, `10` lines by default. Click a snippet's file path to open it.
 - Issue and pull request links get cards too, as in upstream. Turn them off under **Issues → Enable**.
 
-## Limits from upstream
+## Limits
 
-- Cards render in Reading view only. Live Preview shows the plain link.
+- Source mode shows the plain link.
+- Links to a branch, such as `blob/main/...`, download again on each render. Commit links download once per Obsidian session.
 - Every GitHub `blob`, `issues` and `pull` link in a note gets a card. Upstream has no way to skip one link.
 - Each card downloads the whole file. Then it cuts out the line range.
 
