@@ -21,7 +21,8 @@ Upstream also draws cards in Reading view only. It hooks `registerMarkdownPostPr
 1. `getShikiHighlighter` looks up the Shiki Highlighter plugin. If that plugin is off or loading, the card renders the upstream way.
 2. `shikiLanguageFor` picks a language from Shiki's own list, `obsidianSafeLanguageNames`. It tries the file extension first, such as `tf` or `yml`. Next it tries upstream's PrismJS name, such as `c` for a `.h` file. Shiki has no grammar for some files, such as `.fga`. Those render as `plaintext`.
 3. `renderWithEc` draws the code with `showLineNumbers startLineNumber=<first line> wrap`. A link to `#L172-L183` shows lines 172 to 183. Long lines wrap inside the code column.
-4. If `renderWithEc` fails, the card renders the upstream way.
+4. If `renderWithEc` succeeds, `rerenderOnShikiReload` adds the card to Shiki Highlighter's re-render list through `addActiveCodeBlock`. Shiki re-renders the card after a theme change or a light/dark switch.
+5. If `renderWithEc` fails, the card renders the upstream way.
 
 ## How Live Preview finds links
 

@@ -1,7 +1,7 @@
 import styles from './FileEmbed.module.scss';
 import { Settings, SettingsProvider } from '../settings';
 import { FileSnippet } from '../client/types';
-import { getShikiHighlighter, renderMarkdown, shikiLanguageFor } from '../utilities';
+import { getShikiPlugin, renderMarkdown, rerenderOnShikiReload, shikiLanguageFor } from '../utilities';
 import { ExpandableEmbed } from './ExpandableEmbed';
 import { Shard } from '../components/core';
 
@@ -72,7 +72,7 @@ export class FileEmbed extends ExpandableEmbed {
 		// Shiki Highlighter reads a fence's options from the note text via `getSectionInfo`.
 		// A fence rendered by `renderMarkdown` has no line in the note text, so its options
 		// come back empty. Pass the options to Shiki's renderer directly instead.
-		const shiki = getShikiHighlighter(this.settings.app);
+		const shiki = getShikiPlugin(this.settings.app);
 		if (!shiki) {
 			renderMarkdown(this.settings.app, content, container.element, this);
 			return;
@@ -82,11 +82,16 @@ export class FileEmbed extends ExpandableEmbed {
 		// Obsidian wraps every rendered code block in `block-language-<lang>`; theme CSS targets it.
 		const el = container.element.createDiv({ cls: `block-language-${language}` });
 		const meta = `showLineNumbers startLineNumber=${lines?.start ?? 1} wrap`;
-		shiki.renderWithEc(snippetContent, language, meta, el).catch((err) => {
-			console.error('Shiki failed to render file snippet', err);
-			el.remove();
-			renderMarkdown(this.settings.app, content, container.element, this);
-		});
+		const render = () => shiki.highlighter.renderWithEc(snippetContent, language, meta, el);
+
+		render().then(
+			() => this.register(rerenderOnShikiReload(shiki, render)),
+			(err) => {
+				console.error('Shiki failed to render file snippet', err);
+				el.remove();
+				renderMarkdown(this.settings.app, content, container.element, this);
+			},
+		);
 	}
 
 	private tryToggle() {
